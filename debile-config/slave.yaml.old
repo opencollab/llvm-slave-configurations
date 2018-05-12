@@ -1,0 +1,32 @@
+---
+xmlrpc:
+    user: "null"
+    password: null
+    host: debile.debian.net
+    port: 22017
+    ca_certs: /etc/debile/master.crt
+
+gpg: GPGFINGERPRINTGOESHEREATSOMEPOINTSOONISH
+
+dput:
+    host: ursae
+
+components:
+    - main
+
+checks:
+    - lintian
+    - build
+    - pep8
+    - cppcheck
+    - clang
+    - clanganalyzer
+    - honorcxx
+    - coccinelle
+
+arches:
+    - amd64
+    - all
+
+suites:
+    - unstable
