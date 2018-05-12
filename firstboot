@@ -11,15 +11,16 @@ sleep 60
 
 # install our new sources
 cat > /etc/apt/sources.list <<EOF
-deb http://$PXESERVER:3142/debian wheezy main contrib non-free
-deb http://debian.saltstack.com/debian wheezy-saltstack main
+deb http://$PXESERVER:3142/debian stretch main contrib non-free
+deb http://repo.saltstack.com/apt/debian/9/amd64/latest stretch main
 
 EOF
 
-echo "APT::Get::AllowUnauthenticated yes;" > /etc/apt/apt.conf.d/99auth
+#echo "APT::Get::AllowUnauthenticated yes;" > /etc/apt/apt.conf.d/99auth
 
 # add salt key
-wget -q -O- "http://debian.saltstack.com/debian-salt-team-joehealy.gpg.key" | apt-key add -
+wget -O - https://repo.saltstack.com/apt/debian/9/amd64/latest/SALTSTACK-GPG-KEY.pub | apt-key add -
+
 
 # update apt
 /usr/bin/apt-get update
@@ -29,23 +30,22 @@ apt-get install --yes --no-install-recommends --force-yes salt-minion
 
 sed -i -e "s|#master: salt|master: $PXESERVER|" /etc/salt/minion
 
-/etc/init.d/salt-minion restart
-
 # download configuration files
 /usr/bin/curl -o /tmp/iplist http://$PXESERVER/iplist
 
 # get ip and detect hostname
-_ip=`ip addr list eth0 |grep 'inet ' |cut -d' ' -f6|cut -d/ -f1`
+_ip=`ip addr list eno1 |grep 'inet ' |cut -d' ' -f6|cut -d/ -f1`
 hostname=`grep $_ip /tmp/iplist | awk '{print $1}'`
 rm /tmp/iplist
 
 # set hostname
 echo $hostname > /etc/hostname
-/etc/init.d/hostname.sh
+echo $hostname > /etc/salt/minion_id
+
+/etc/init.d/salt-minion restart
 
 # Remove our firstboot service so that it won't run again
-update-rc.d firstboot remove
-rm /etc/init.d/firstboot /root/firstboot
+rm -f /etc/init.d/firstboot /root/firstboot /lib/systemd/system/firstboot.service
 
 # Reboot into the new kernel
 /sbin/reboot

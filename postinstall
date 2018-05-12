@@ -4,6 +4,30 @@
 /usr/bin/curl -o /root/firstboot http://10.0.0.1/firstboot
 chmod +x /root/firstboot
 
+
+# create a service that will run our firstboot script
+cat > /lib/systemd/system/firstboot.service << EOF
+
+[Unit]
+Description=Firstboot script
+
+[Service]
+Type=simple
+WorkingDirectory=/root/
+ExecStart=/root/firstboot
+SyslogIdentifier=firstboot
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+ln -s /lib/systemd/system/firstboot.service  /etc/systemd/system/multi-user.target.wants/fistboot.service
+systemctl enable firstboot
+systemctl unmask firstboot
+
+echo "finished postinst"
+exit 0
+
 # create a service that will run our firstboot script
 cat > /etc/init.d/firstboot << EOF
 ### BEGIN INIT INFO
@@ -24,5 +48,6 @@ EOF
 # install the firstboot service
 chmod +x /etc/init.d/firstboot
 update-rc.d firstboot defaults
+systemctl enable firstboot
 
 echo "finished postinst"
